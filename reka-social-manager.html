@@ -1,0 +1,939 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0C;
+    --surface:#14141A;
+    --surface2:#1C1C24;
+    --border:rgba(255,255,255,0.08);
+    --border-soft:rgba(255,255,255,0.05);
+    --text:#F4F2EC;
+    --text-dim:#9997A3;
+    --text-faint:#5F5D68;
+    --gold:#F2B84B;
+    --gold-dim:rgba(242,184,75,0.14);
+    --violet:#8C6BFF;
+    --violet-dim:rgba(140,107,255,0.14);
+    --success:#3ECF8E;
+    --success-dim:rgba(62,207,142,0.14);
+    --danger:#FF5470;
+    --danger-dim:rgba(255,84,112,0.14);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  #rekaApp{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    width:100%;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    overflow-x:hidden;
+  }
+  #rekaApp::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(140,107,255,0.10), transparent 45%),
+      radial-gradient(circle at 88% 92%, rgba(242,184,75,0.08), transparent 45%);
+    pointer-events:none;
+    z-index:0;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:relative; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px;
+    border-bottom:1px solid var(--border-soft);
+    gap:16px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg,var(--gold),var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:#0A0A0C;
+    flex-shrink:0;
+  }
+  .brand-text{display:flex; flex-direction:column; line-height:1.15;}
+  .brand-text b{font-family:'Space Grotesk',sans-serif; font-size:15px; letter-spacing:0.02em;}
+  .brand-text span{font-size:11px; color:var(--text-dim); letter-spacing:0.04em;}
+  .tabs{display:flex; gap:6px; background:var(--surface); padding:4px; border-radius:10px; border:1px solid var(--border-soft);}
+  .tab-btn{
+    padding:8px 16px; border-radius:8px; border:none; background:transparent;
+    color:var(--text-dim); font-size:13px; font-weight:600; cursor:pointer;
+    font-family:'Inter',sans-serif; transition:all .15s;
+  }
+  .tab-btn.active{background:var(--surface2); color:var(--text);}
+  .top-right{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-faint);}
+  .clock{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim);}
+
+  /* ---------- Layout ---------- */
+  .layout{position:relative; z-index:1; display:flex; flex:1; min-height:0;}
+  .sidebar{
+    width:250px; flex-shrink:0; border-right:1px solid var(--border-soft);
+    padding:18px 14px; display:flex; flex-direction:column; gap:10px;
+  }
+  .sidebar-head{display:flex; align-items:center; justify-content:space-between; padding:0 6px 6px;}
+  .sidebar-head h4{font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-faint); font-weight:600; margin:0;}
+  .icon-btn{
+    width:26px; height:26px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface); color:var(--text-dim); cursor:pointer; font-size:15px;
+    display:flex; align-items:center; justify-content:center; transition:all .15s;
+  }
+  .icon-btn:hover{border-color:var(--gold); color:var(--gold); background:var(--gold-dim);}
+  .client-search{
+    background:var(--surface); border:1px solid var(--border-soft); border-radius:9px;
+    padding:8px 10px; color:var(--text); font-size:13px; margin-bottom:2px; font-family:'Inter',sans-serif;
+  }
+  .client-search:focus{outline:none; border-color:var(--violet);}
+  .client-list{display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex:1;}
+  .client-row{
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px;
+    cursor:pointer; border:1px solid transparent; transition:all .15s;
+  }
+  .client-row:hover{background:var(--surface);}
+  .client-row.active{background:var(--surface2); border-color:var(--border);}
+  .client-avatar{
+    width:30px; height:30px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; font-family:'Space Grotesk',sans-serif; color:#0A0A0C;
+  }
+  .client-meta{display:flex; flex-direction:column; min-width:0; flex:1;}
+  .client-meta b{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .client-meta small{font-size:10.5px; color:var(--text-faint);}
+  .client-pct{font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--text-dim); flex-shrink:0;}
+
+  .main{flex:1; padding:22px 26px; min-width:0; overflow-y:auto;}
+  .content-wrap{max-width:1180px; margin:0 auto; display:flex; gap:22px;}
+  .center-col{flex:1; min-width:0; display:flex; flex-direction:column; gap:18px;}
+  .right-col{width:300px; flex-shrink:0; display:flex; flex-direction:column; gap:16px;}
+
+  /* client header */
+  .client-header{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;}
+  .client-title{display:flex; align-items:center; gap:12px;}
+  .client-title .client-avatar{width:44px; height:44px; font-size:16px;}
+  .client-title h2{font-family:'Space Grotesk',sans-serif; font-size:21px; margin:0; font-weight:600;}
+  .client-title p{margin:2px 0 0; font-size:12.5px; color:var(--text-dim);}
+  .header-actions{display:flex; gap:8px;}
+  .btn{
+    border:none; border-radius:9px; padding:10px 16px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:'Inter',sans-serif; display:flex; align-items:center; gap:6px; transition:all .15s;
+  }
+  .btn-primary{background:var(--gold); color:#0A0A0C;}
+  .btn-primary:hover{box-shadow:0 0 0 3px var(--gold-dim);}
+  .btn-ghost{background:var(--surface); color:var(--text); border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--text-dim);}
+  .btn-ghost.active-view{border-color:var(--violet); color:var(--violet);}
+
+  .card{background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius); padding:18px;}
+
+  /* calendar */
+  .cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .cal-nav h3{font-family:'Space Grotesk',sans-serif; font-size:16px; margin:0;}
+  .cal-nav-btns{display:flex; gap:6px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .cal-dow{font-size:10.5px; text-align:center; color:var(--text-faint); padding-bottom:4px; letter-spacing:0.04em;}
+  .cal-cell{
+    min-height:78px; border-radius:9px; background:var(--surface2); border:1px solid var(--border-soft);
+    padding:6px; display:flex; flex-direction:column; gap:3px; cursor:pointer; transition:all .15s; position:relative;
+  }
+  .cal-cell:hover{border-color:var(--gold);}
+  .cal-cell.empty{background:transparent; border:none; cursor:default;}
+  .cal-cell.today{border-color:var(--violet);}
+  .cal-daynum{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+  .cal-cell.today .cal-daynum{color:var(--violet); font-weight:700;}
+  .cal-post-chip{
+    font-size:10px; padding:2px 5px; border-radius:5px; white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis; font-weight:600;
+  }
+  .chip-posted{background:var(--success-dim); color:var(--success);}
+  .chip-scheduled{background:var(--gold-dim); color:var(--gold);}
+  .chip-idea{background:rgba(255,255,255,0.08); color:var(--text-dim);}
+  .chip-missed{background:var(--danger-dim); color:var(--danger);}
+  .cal-more{font-size:9.5px; color:var(--text-faint);}
+
+  /* list view */
+  .post-row{
+    display:flex; align-items:center; gap:12px; padding:12px 10px; border-radius:10px;
+    border:1px solid var(--border-soft); margin-bottom:8px; background:var(--surface2); flex-wrap:wrap;
+  }
+  .post-date-badge{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); background:var(--surface);
+    border:1px solid var(--border-soft); padding:6px 8px; border-radius:8px; text-align:center; min-width:56px; flex-shrink:0;
+  }
+  .post-date-badge b{display:block; font-size:14px; color:var(--text); font-family:'Space Grotesk',sans-serif;}
+  .post-body{flex:1; min-width:160px; display:flex; flex-direction:column; gap:2px;}
+  .post-body input.title-input{
+    background:transparent; border:none; color:var(--text); font-size:14px; font-weight:600;
+    font-family:'Inter',sans-serif; padding:2px 0;
+  }
+  .post-body input.title-input:focus{outline:none; border-bottom:1px solid var(--gold);}
+  .post-sub{display:flex; gap:8px; align-items:center; font-size:11px; color:var(--text-faint); flex-wrap:wrap;}
+  .status-select, .platform-select, .time-input, .date-input{
+    background:var(--surface); border:1px solid var(--border-soft); color:var(--text-dim);
+    font-size:11.5px; border-radius:6px; padding:4px 6px; font-family:'Inter',sans-serif;
+  }
+  .status-select:focus, .platform-select:focus, .time-input:focus, .date-input:focus{outline:none; border-color:var(--violet);}
+  .post-actions{display:flex; gap:6px; margin-left:auto;}
+  .row-icon-btn{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:14px; padding:4px;
+  }
+  .row-icon-btn:hover{color:var(--danger);}
+
+  .empty-state{
+    text-align:center; padding:44px 20px; color:var(--text-dim);
+  }
+  .empty-state .glyph{font-size:30px; margin-bottom:8px; opacity:0.6;}
+  .empty-state b{color:var(--text); display:block; margin-bottom:4px; font-family:'Space Grotesk',sans-serif;}
+
+  /* right col */
+  .ring-card{display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center;}
+  .ring-wrap{position:relative; width:150px; height:150px;}
+  .ring-num{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .ring-num b{font-family:'Space Grotesk',sans-serif; font-size:26px; line-height:1;}
+  .ring-num span{font-size:10px; color:var(--text-faint); letter-spacing:0.05em;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;}
+  .stat-box{background:var(--surface2); border-radius:9px; padding:9px; text-align:center;}
+  .stat-box b{display:block; font-family:'JetBrains Mono',monospace; font-size:16px;}
+  .stat-box span{font-size:9.5px; color:var(--text-faint); letter-spacing:0.03em; text-transform:uppercase;}
+
+  .insight-line{
+    display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--text-dim); line-height:1.4;
+  }
+  .insight-line .dot{color:var(--violet); flex-shrink:0;}
+
+  .tip-card{
+    border:1px solid var(--border-soft); border-radius:10px; padding:12px; background:var(--surface2);
+    font-size:12.5px; color:var(--text-dim); line-height:1.5; position:relative;
+  }
+  .tip-tag{
+    display:inline-block; font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--violet); background:var(--violet-dim); padding:2px 7px; border-radius:5px; margin-bottom:6px; font-weight:700;
+  }
+  .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .card-head h4{font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint); margin:0; font-weight:700;}
+
+  /* overview grid */
+  .overview-head{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+  .overview-head h2{font-family:'Space Grotesk',sans-serif; font-size:22px; margin:0;}
+  .overview-head p{margin:4px 0 0; color:var(--text-dim); font-size:13px;}
+  .overview-stats{display:flex; gap:10px; flex-wrap:wrap; margin:16px 0 20px;}
+  .ov-stat{background:var(--surface); border:1px solid var(--border-soft); border-radius:12px; padding:14px 18px; flex:1; min-width:130px;}
+  .ov-stat b{font-family:'Space Grotesk',sans-serif; font-size:22px; display:block;}
+  .ov-stat span{font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.04em;}
+  .leaderboard{display:flex; flex-direction:column; gap:8px;}
+  .lb-row{
+    display:grid; grid-template-columns:28px 32px 1fr 90px 110px; align-items:center; gap:12px;
+    padding:11px 12px; background:var(--surface); border:1px solid var(--border-soft); border-radius:10px; cursor:pointer;
+  }
+  .lb-row:hover{border-color:var(--gold);}
+  .lb-rank{font-family:'JetBrains Mono',monospace; color:var(--text-faint); font-size:12px;}
+  .lb-name{display:flex; flex-direction:column;}
+  .lb-name b{font-size:13.5px;}
+  .lb-name span{font-size:10.5px; color:var(--text-faint);}
+  .lb-bar-wrap{background:var(--surface2); border-radius:5px; height:6px; overflow:hidden;}
+  .lb-bar{height:100%; border-radius:5px;}
+  .lb-pct{font-family:'JetBrains Mono',monospace; font-size:13px; text-align:right;}
+
+  /* modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px;
+    width:100%; max-width:420px; display:flex; flex-direction:column; gap:12px;
+  }
+  .modal h3{font-family:'Space Grotesk',sans-serif; margin:0 0 4px; font-size:17px;}
+  .field-label{font-size:11.5px; color:var(--text-faint); margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.04em;}
+  .field-input, .field-textarea, .field-select{
+    width:100%; background:var(--surface2); border:1px solid var(--border-soft); border-radius:9px;
+    padding:10px 11px; color:var(--text); font-size:13.5px; font-family:'Inter',sans-serif;
+  }
+  .field-input:focus, .field-textarea:focus, .field-select:focus{outline:none; border-color:var(--gold);}
+  .field-textarea{resize:vertical; min-height:60px;}
+  .field-row{display:flex; gap:10px;}
+  .field-row > div{flex:1;}
+  .modal-actions{display:flex; justify-content:space-between; gap:8px; margin-top:6px;}
+  .swatch-row{display:flex; gap:8px; flex-wrap:wrap;}
+  .swatch{width:24px; height:24px; border-radius:50%; cursor:pointer; border:2px solid transparent;}
+  .swatch.selected{border-color:var(--text);}
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--surface2); border:1px solid var(--border); color:var(--text);
+    padding:10px 18px; border-radius:10px; font-size:12.5px; z-index:60; opacity:0; transition:opacity .25s;
+  }
+  .toast.show{opacity:1;}
+
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--surface2); border-radius:4px;}
+
+  @media (max-width:900px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%; border-right:none; border-bottom:1px solid var(--border-soft); max-height:220px;}
+    .content-wrap{flex-direction:column;}
+    .right-col{width:100%;}
+    .lb-row{grid-template-columns:24px 28px 1fr 70px;}
+    .lb-row .lb-bar-wrap{display:none;}
+  }
+</style>
+
+<div id="rekaApp">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div class="brand-text">
+        <b>REKA</b>
+        <span>AI SOCIAL MANAGER</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" id="tabOverview">Overview</button>
+      <button class="tab-btn" id="tabClient">Client Calendar</button>
+    </div>
+    <div class="top-right">
+      <span class="clock mono" id="clockEl">—</span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <h4>Customers (<span id="clientCount">0</span>)</h4>
+        <button class="icon-btn" id="addClientBtn" title="Add customer">+</button>
+      </div>
+      <input class="client-search" id="clientSearch" placeholder="Search customer...">
+      <div class="client-list" id="clientList"></div>
+    </div>
+
+    <div class="main">
+      <!-- OVERVIEW PAGE -->
+      <div id="overviewPage" class="content-wrap" style="flex-direction:column; display:none;">
+        <div class="overview-head">
+          <div>
+            <h2>Agency Overview</h2>
+            <p>Live consistency across every customer on your roster.</p>
+          </div>
+        </div>
+        <div class="overview-stats" id="overviewStats"></div>
+        <div class="card">
+          <div class="card-head"><h4>Consistency Leaderboard — This Month</h4></div>
+          <div class="leaderboard" id="leaderboard"></div>
+        </div>
+      </div>
+
+      <!-- CLIENT PAGE -->
+      <div id="clientPage" class="content-wrap" style="display:none;">
+        <div class="center-col">
+          <div class="client-header">
+            <div class="client-title">
+              <div class="client-avatar" id="clientAvatar">?</div>
+              <div>
+                <h2 id="clientName">Select a customer</h2>
+                <p id="clientSub">—</p>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-ghost" id="viewCalBtn">Calendar</button>
+              <button class="btn btn-ghost" id="viewListBtn">List</button>
+              <button class="btn btn-primary" id="addPostBtn">+ Add Content</button>
+            </div>
+          </div>
+
+          <div class="card" id="calendarView">
+            <div class="cal-nav">
+              <h3 id="calMonthLabel">—</h3>
+              <div class="cal-nav-btns">
+                <button class="icon-btn" id="prevMonthBtn">‹</button>
+                <button class="icon-btn" id="nextMonthBtn">›</button>
+              </div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+
+          <div class="card" id="listView" style="display:none;">
+            <div class="card-head"><h4>All Content</h4></div>
+            <div id="listContainer"></div>
+          </div>
+        </div>
+
+        <div class="right-col">
+          <div class="card ring-card">
+            <div class="card-head" style="width:100%;"><h4>Consistency — <span id="ringMonthLabel">This Month</span></h4></div>
+            <div class="ring-wrap"><svg id="ringSvg" viewBox="0 0 150 150"></svg>
+              <div class="ring-num"><b id="ringPct">0%</b><span>ON TRACK</span></div>
+            </div>
+            <div class="stat-grid">
+              <div class="stat-box"><b id="statPlanned" style="color:var(--text)">0</b><span>Planned</span></div>
+              <div class="stat-box"><b id="statPosted" style="color:var(--success)">0</b><span>Posted</span></div>
+              <div class="stat-box"><b id="statMissed" style="color:var(--danger)">0</b><span>Missed</span></div>
+              <div class="stat-box"><b id="statStreak" style="color:var(--gold)">0</b><span>Day Streak</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h4>AI Insight</h4></div>
+            <div id="insightBox" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h4>AI Tips</h4>
+              <button class="icon-btn" id="shuffleTipBtn" title="New tip">↻</button>
+            </div>
+            <div id="tipBox"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div class="toast" id="toastEl"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const AVATAR_COLORS = ["#F2B84B","#8C6BFF","#3ECF8E","#FF5470","#4DB8FF","#FF9F5A","#C77DFF","#5AD1B0"];
+  const PLATFORMS = [
+    {v:"instagram", l:"Instagram Post"},
+    {v:"reel", l:"Reel"},
+    {v:"story", l:"Story"},
+    {v:"facebook", l:"Facebook"},
+    {v:"linkedin", l:"LinkedIn"},
+    {v:"youtube", l:"YouTube"},
+    {v:"tiktok", l:"TikTok"},
+    {v:"other", l:"Other"}
+  ];
+  const STATUSES = ["Idea","Draft","Scheduled","Posted"];
+  const TIPS = [
+    {tag:"Consistency", text:"Customers who post on a fixed rhythm (same 3 days a week) see steadier follower growth than those who post at random."},
+    {tag:"Reels", text:"The first 2 seconds decide if someone stays. Open with motion or a bold on-screen line, not a logo."},
+    {tag:"Captions", text:"Ask one specific question in your caption. 'Which one?' outperforms 'thoughts?' for comments almost every time."},
+    {tag:"Timing", text:"Test posting between 6–9pm local time. Wellness and lifestyle audiences scroll most after dinner."},
+    {tag:"Hooks", text:"Lead with the outcome, not the process. 'This fixed my sleep' beats 'Here's my night routine' as a hook."},
+    {tag:"Consistency", text:"Missing one post rarely hurts reach. Missing three in a row is when the algorithm starts to forget you."},
+    {tag:"Growth", text:"Reply to every comment in the first hour after posting — it's one of the strongest signals for reach."},
+    {tag:"Repurpose", text:"One good idea can become a Reel, a carousel, and a story poll. Plan content in threes, not ones."},
+    {tag:"Planning", text:"Batch a week of captions in one sitting. Context-switching between ideas is what actually kills consistency."},
+    {tag:"Reels", text:"Text overlays that restate your spoken hook in the first frame boost watch-through for sound-off viewers."},
+    {tag:"Trust", text:"Behind-the-scenes content converts better for service brands than polished product shots — people buy people."},
+    {tag:"Data", text:"Track saves, not just likes. Saves are the strongest signal that content is genuinely useful."}
+  ];
+
+  let clients = [];
+  let posts = {}; // clientId -> array
+  let activeClientId = null;
+  let activePage = "overview";
+  let calView = "cal";
+  let calMonthOffset = 0;
+  let editingPostId = null;
+  let loaded = false;
+
+  const $ = (id) => document.getElementById(id);
+  const uid = () => Math.random().toString(36).slice(2,10);
+  const todayStr = () => new Date().toISOString().slice(0,10);
+
+  function toast(msg){
+    const t = $("toastEl");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"), 2200);
+  }
+
+  // ---------- Storage ----------
+  async function loadAll(){
+    try{
+      const c = await window.storage.get("clients", true);
+      clients = c ? JSON.parse(c.value) : [];
+    }catch(e){ clients = []; }
+
+    posts = {};
+    for(const c of clients){
+      try{
+        const p = await window.storage.get("posts:"+c.id, true);
+        posts[c.id] = p ? JSON.parse(p.value) : [];
+      }catch(e){ posts[c.id] = []; }
+    }
+    if(clients.length && !activeClientId) activeClientId = clients[0].id;
+    loaded = true;
+  }
+
+  async function saveClients(){
+    try{ await window.storage.set("clients", JSON.stringify(clients), true); }
+    catch(e){ toast("Couldn't save — try again"); }
+  }
+  async function savePosts(clientId){
+    try{ await window.storage.set("posts:"+clientId, JSON.stringify(posts[clientId]||[]), true); }
+    catch(e){ toast("Couldn't save — try again"); }
+  }
+
+  // ---------- Helpers ----------
+  function initials(name){
+    return name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+  }
+  function colorFor(client){ return client.color || "#F2B84B"; }
+  function fmtMonthLabel(offset){
+    const d = new Date(); d.setMonth(d.getMonth()+offset);
+    return d.toLocaleString(undefined,{month:"long", year:"numeric"});
+  }
+  function monthBounds(offset){
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()+offset);
+    const y = d.getFullYear(), m = d.getMonth();
+    const first = new Date(y,m,1);
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    return {y,m,first,daysInMonth};
+  }
+  function statusForPost(p){
+    if(p.status === "Posted") return "Posted";
+    if(p.date < todayStr() && p.status !== "Posted") return "Missed";
+    return p.status;
+  }
+  function chipClass(status){
+    if(status==="Posted") return "chip-posted";
+    if(status==="Missed") return "chip-missed";
+    if(status==="Scheduled") return "chip-scheduled";
+    return "chip-idea";
+  }
+
+  function computeStats(clientId, offset){
+    const list = (posts[clientId]||[]);
+    const {y,m} = monthBounds(offset);
+    const inMonth = list.filter(p=>{
+      const dt = new Date(p.date+"T00:00:00");
+      return dt.getFullYear()===y && dt.getMonth()===m;
+    });
+    let planned = inMonth.length;
+    let postedCt = 0, missedCt = 0;
+    inMonth.forEach(p=>{
+      const s = statusForPost(p);
+      if(s==="Posted") postedCt++;
+      else if(s==="Missed") missedCt++;
+    });
+    const denom = postedCt + missedCt;
+    const pct = denom>0 ? Math.round((postedCt/denom)*100) : (planned>0 ? 100 : 0);
+
+    // streak: consecutive days going back from today with >=1 Posted post
+    let streak = 0;
+    let cursor = new Date();
+    const postedDates = new Set(list.filter(p=>p.status==="Posted").map(p=>p.date));
+    for(let i=0;i<365;i++){
+      const ds = cursor.toISOString().slice(0,10);
+      if(postedDates.has(ds)){ streak++; cursor.setDate(cursor.getDate()-1); }
+      else if(ds===todayStr()){ cursor.setDate(cursor.getDate()-1); continue; }
+      else break;
+    }
+    return {planned, posted:postedCt, missed:missedCt, pct, streak};
+  }
+
+  function bestDay(clientId){
+    const list = posts[clientId]||[];
+    const postedList = list.filter(p=>p.status==="Posted");
+    if(!postedList.length) return null;
+    const counts = {};
+    postedList.forEach(p=>{
+      const dow = new Date(p.date+"T00:00:00").toLocaleDateString(undefined,{weekday:"long"});
+      counts[dow] = (counts[dow]||0)+1;
+    });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  }
+
+  function nextUpcoming(clientId){
+    const list = (posts[clientId]||[]).filter(p=>p.date>=todayStr() && p.status!=="Posted");
+    list.sort((a,b)=>a.date.localeCompare(b.date));
+    return list[0]||null;
+  }
+
+  // ---------- Rendering: sidebar ----------
+  function renderClientList(){
+    $("clientCount").textContent = clients.length;
+    const q = ($("clientSearch").value||"").toLowerCase();
+    const wrap = $("clientList");
+    wrap.innerHTML = "";
+    clients.filter(c=>c.name.toLowerCase().includes(q)).forEach(c=>{
+      const st = computeStats(c.id, 0);
+      const row = document.createElement("div");
+      row.className = "client-row" + (c.id===activeClientId && activePage==="client" ? " active" : "");
+      row.innerHTML = `
+        <div class="client-avatar" style="background:${colorFor(c)}">${initials(c.name)}</div>
+        <div class="client-meta"><b>${escapeHtml(c.name)}</b><small>${(posts[c.id]||[]).length} posts total</small></div>
+        <div class="client-pct">${st.pct}%</div>
+      `;
+      row.onclick = ()=>{ activeClientId = c.id; setPage("client"); };
+      wrap.appendChild(row);
+    });
+    if(!clients.length){
+      wrap.innerHTML = `<div style="padding:20px 8px; color:var(--text-faint); font-size:12.5px; text-align:center;">No customers yet.<br>Tap + to add your first one.</div>`;
+    }
+  }
+
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  // ---------- Page switching ----------
+  function setPage(page){
+    activePage = page;
+    $("tabOverview").classList.toggle("active", page==="overview");
+    $("tabClient").classList.toggle("active", page==="client");
+    $("overviewPage").style.display = page==="overview" ? "flex" : "none";
+    $("clientPage").style.display = page==="client" ? "flex" : "none";
+    if(page==="overview") renderOverview();
+    else renderClientPage();
+    renderClientList();
+  }
+
+  // ---------- Overview page ----------
+  function renderOverview(){
+    const totalPosts = clients.reduce((a,c)=>a+(posts[c.id]||[]).length,0);
+    const avgPct = clients.length ? Math.round(clients.reduce((a,c)=>a+computeStats(c.id,0).pct,0)/clients.length) : 0;
+    const totalPostedThisMonth = clients.reduce((a,c)=>a+computeStats(c.id,0).posted,0);
+    $("overviewStats").innerHTML = `
+      <div class="ov-stat"><b>${clients.length}</b><span>Customers</span></div>
+      <div class="ov-stat"><b>${totalPosts}</b><span>Total Content Items</span></div>
+      <div class="ov-stat"><b>${totalPostedThisMonth}</b><span>Posted This Month</span></div>
+      <div class="ov-stat"><b style="color:${avgPct>=70?'var(--success)':avgPct>=40?'var(--gold)':'var(--danger)'}">${avgPct}%</b><span>Avg. Consistency</span></div>
+    `;
+    const rows = clients.map(c=>({c, st:computeStats(c.id,0)})).sort((a,b)=>b.st.pct-a.st.pct);
+    const lb = $("leaderboard");
+    lb.innerHTML = "";
+    if(!rows.length){
+      lb.innerHTML = `<div class="empty-state"><div class="glyph">◎</div><b>No customers yet</b>Add your first customer from the sidebar to start tracking.</div>`;
+      return;
+    }
+    rows.forEach((r,i)=>{
+      const barColor = r.st.pct>=70 ? "var(--success)" : r.st.pct>=40 ? "var(--gold)" : "var(--danger)";
+      const row = document.createElement("div");
+      row.className = "lb-row";
+      row.innerHTML = `
+        <div class="lb-rank">${String(i+1).padStart(2,"0")}</div>
+        <div class="client-avatar" style="background:${colorFor(r.c)}">${initials(r.c.name)}</div>
+        <div class="lb-name"><b>${escapeHtml(r.c.name)}</b><span>${r.st.posted} posted · ${r.st.planned} planned</span></div>
+        <div class="lb-bar-wrap"><div class="lb-bar" style="width:${r.st.pct}%; background:${barColor}"></div></div>
+        <div class="lb-pct" style="color:${barColor}">${r.st.pct}%</div>
+      `;
+      row.onclick = ()=>{ activeClientId = r.c.id; setPage("client"); };
+      lb.appendChild(row);
+    });
+  }
+
+  // ---------- Client page ----------
+  function renderRing(pct){
+    const svg = $("ringSvg");
+    const r = 62, cx=75, cy=75, circ = 2*Math.PI*r;
+    const color = pct>=70 ? "var(--success)" : pct>=40 ? "var(--gold)" : "var(--danger)";
+    svg.innerHTML = `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color.replace('var(--success)','#3ECF8E').replace('var(--gold)','#F2B84B').replace('var(--danger)','#FF5470')}"
+        stroke-width="10" stroke-linecap="round" stroke-dasharray="${circ}"
+        stroke-dashoffset="${circ - (circ*pct/100)}" transform="rotate(-90 ${cx} ${cy})"
+        style="transition:stroke-dashoffset .6s ease;"/>
+    `;
+    $("ringPct").style.color = pct>=70 ? "#3ECF8E" : pct>=40 ? "#F2B84B" : "#FF5470";
+  }
+
+  function renderClientPage(){
+    const c = clients.find(x=>x.id===activeClientId);
+    if(!c){
+      $("clientName").textContent = "Select a customer";
+      $("clientSub").textContent = "Pick someone from the list on the left, or add a new one.";
+      $("clientAvatar").textContent = "?";
+      $("clientAvatar").style.background = "var(--surface2)";
+      $("calGrid").innerHTML = "";
+      $("listContainer").innerHTML = "";
+      renderRing(0);
+      ["statPlanned","statPosted","statMissed","statStreak"].forEach(id=>$(id).textContent="0");
+      $("insightBox").innerHTML = `<div class="insight-line"><span class="dot">◆</span>Add a customer to see AI insights here.</div>`;
+      return;
+    }
+    $("clientName").textContent = c.name;
+    $("clientSub").textContent = (posts[c.id]||[]).length + " content items on the calendar";
+    $("clientAvatar").textContent = initials(c.name);
+    $("clientAvatar").style.background = colorFor(c);
+
+    const st = computeStats(c.id, calMonthOffset);
+    $("ringMonthLabel").textContent = calMonthOffset===0 ? "This Month" : fmtMonthLabel(calMonthOffset);
+    renderRing(st.pct);
+    $("ringPct").textContent = st.pct+"%";
+    $("statPlanned").textContent = st.planned;
+    $("statPosted").textContent = st.posted;
+    $("statMissed").textContent = st.missed;
+    $("statStreak").textContent = st.streak;
+
+    const bd = bestDay(c.id);
+    const nx = nextUpcoming(c.id);
+    let insights = [];
+    if(st.streak>0) insights.push(`${c.name.split(" ")[0]} is on a <b style="color:var(--gold)">${st.streak}-day posting streak</b>. Keep it alive.`);
+    if(bd) insights.push(`Most posts go live on <b style="color:var(--text)">${bd}s</b> — consider planning your best content there.`);
+    if(nx) insights.push(`Next up: <b style="color:var(--text)">${escapeHtml(nx.title)}</b> on ${new Date(nx.date+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})}.`);
+    if(st.missed>0) insights.push(`<b style="color:var(--danger)">${st.missed} post${st.missed>1?"s":""} missed</b> this month — reschedule to protect the streak.`);
+    if(!insights.length) insights.push("Add content to this calendar to start generating insights.");
+    $("insightBox").innerHTML = insights.map(t=>`<div class="insight-line"><span class="dot">◆</span><span>${t}</span></div>`).join("");
+
+    renderCalendarGrid(c.id);
+    renderListView(c.id);
+    $("calendarView").style.display = calView==="cal" ? "block" : "none";
+    $("listView").style.display = calView==="list" ? "block" : "none";
+    $("viewCalBtn").classList.toggle("active-view", calView==="cal");
+    $("viewListBtn").classList.toggle("active-view", calView==="list");
+  }
+
+  function renderCalendarGrid(clientId){
+    $("calMonthLabel").textContent = fmtMonthLabel(calMonthOffset);
+    const {y,m,first,daysInMonth} = monthBounds(calMonthOffset);
+    const startDow = first.getDay();
+    const grid = $("calGrid");
+    grid.innerHTML = "";
+    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
+      const el = document.createElement("div"); el.className="cal-dow"; el.textContent=d; grid.appendChild(el);
+    });
+    for(let i=0;i<startDow;i++){
+      const el = document.createElement("div"); el.className="cal-cell empty"; grid.appendChild(el);
+    }
+    const list = posts[clientId]||[];
+    for(let day=1; day<=daysInMonth; day++){
+      const dateStr = `${y}-${String(m+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const dayPosts = list.filter(p=>p.date===dateStr).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+      const cell = document.createElement("div");
+      cell.className = "cal-cell" + (dateStr===todayStr() ? " today" : "");
+      const shown = dayPosts.slice(0,2);
+      cell.innerHTML = `<div class="cal-daynum">${day}</div>` +
+        shown.map(p=>`<div class="cal-post-chip ${chipClass(statusForPost(p))}">${escapeHtml(p.title||"Untitled")}</div>`).join("") +
+        (dayPosts.length>2 ? `<div class="cal-more">+${dayPosts.length-2} more</div>` : "");
+      cell.onclick = ()=> openPostModal(clientId, dayPosts[0] ? dayPosts[0].id : null, dateStr);
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderListView(clientId){
+    const list = (posts[clientId]||[]).slice().sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+    const wrap = $("listContainer");
+    wrap.innerHTML = "";
+    if(!list.length){
+      wrap.innerHTML = `<div class="empty-state"><div class="glyph">✎</div><b>No content yet</b>Tap "+ Add Content" to plan your first post.</div>`;
+      return;
+    }
+    list.forEach(p=>{
+      const s = statusForPost(p);
+      const dt = new Date(p.date+"T00:00:00");
+      const row = document.createElement("div");
+      row.className = "post-row";
+      row.innerHTML = `
+        <div class="post-date-badge">${dt.toLocaleDateString(undefined,{month:"short"})}<b>${dt.getDate()}</b></div>
+        <div class="post-body">
+          <input class="title-input" value="${escapeHtml(p.title||"")}" placeholder="Content title" data-field="title"/>
+          <div class="post-sub">
+            <select class="platform-select" data-field="platform">${PLATFORMS.map(pl=>`<option value="${pl.v}" ${pl.v===p.platform?"selected":""}>${pl.l}</option>`).join("")}</select>
+            <input type="time" class="time-input" value="${p.time||""}" data-field="time"/>
+            <input type="date" class="date-input" value="${p.date||""}" data-field="date"/>
+            <select class="status-select" data-field="status">${STATUSES.map(st=>`<option value="${st}" ${st===p.status?"selected":""}>${st}</option>`).join("")}</select>
+            <span class="cal-post-chip ${chipClass(s)}">${s}</span>
+          </div>
+        </div>
+        <div class="post-actions">
+          <button class="row-icon-btn" title="Edit details">✎</button>
+          <button class="row-icon-btn" title="Delete">✕</button>
+        </div>
+      `;
+      const [editBtn, delBtn] = row.querySelectorAll(".row-icon-btn");
+      row.querySelectorAll("[data-field]").forEach(inp=>{
+        inp.addEventListener("change", ()=>{
+          p[inp.dataset.field] = inp.value;
+          savePosts(clientId);
+          renderClientPage();
+        });
+      });
+      editBtn.onclick = ()=> openPostModal(clientId, p.id);
+      delBtn.onclick = ()=>{
+        posts[clientId] = posts[clientId].filter(x=>x.id!==p.id);
+        savePosts(clientId);
+        renderClientPage();
+        toast("Content deleted");
+      };
+      wrap.appendChild(row);
+    });
+  }
+
+  // ---------- Modals ----------
+  function closeModal(){ $("modalRoot").innerHTML = ""; }
+
+  function openClientModal(){
+    const color = AVATAR_COLORS[clients.length % AVATAR_COLORS.length];
+    $("modalRoot").innerHTML = `
+      <div class="modal-overlay" id="ovl">
+        <div class="modal">
+          <h3>Add a customer</h3>
+          <div>
+            <label class="field-label">Customer / brand name</label>
+            <input class="field-input" id="mClientName" placeholder="e.g. Awshad Wellness"/>
+          </div>
+          <div>
+            <label class="field-label">Avatar color</label>
+            <div class="swatch-row" id="swatchRow"></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" id="mCancel">Cancel</button>
+            <button class="btn btn-primary" id="mSave">Add Customer</button>
+          </div>
+        </div>
+      </div>
+    `;
+    let chosen = color;
+    const sw = $("swatchRow");
+    AVATAR_COLORS.forEach(c=>{
+      const d = document.createElement("div");
+      d.className = "swatch" + (c===chosen?" selected":"");
+      d.style.background = c;
+      d.onclick = ()=>{ chosen=c; sw.querySelectorAll(".swatch").forEach(x=>x.classList.remove("selected")); d.classList.add("selected"); };
+      sw.appendChild(d);
+    });
+    $("ovl").onclick = (e)=>{ if(e.target.id==="ovl") closeModal(); };
+    $("mCancel").onclick = closeModal;
+    $("mSave").onclick = async ()=>{
+      const name = $("mClientName").value.trim();
+      if(!name){ toast("Give the customer a name first"); return; }
+      const id = uid();
+      clients.push({id, name, color:chosen});
+      posts[id] = [];
+      await saveClients();
+      await savePosts(id);
+      activeClientId = id;
+      closeModal();
+      renderClientList();
+      setPage("client");
+      toast("Customer added");
+    };
+  }
+
+  function openPostModal(clientId, postId, prefillDate){
+    const list = posts[clientId]||[];
+    const existing = postId ? list.find(p=>p.id===postId) : null;
+    editingPostId = existing ? existing.id : null;
+    const p = existing || {id:uid(), title:"", platform:"instagram", date:prefillDate||todayStr(), time:"10:00", status:"Scheduled", caption:"", link:""};
+    $("modalRoot").innerHTML = `
+      <div class="modal-overlay" id="ovl">
+        <div class="modal">
+          <h3>${existing? "Edit content" : "New content"}</h3>
+          <div>
+            <label class="field-label">Title</label>
+            <input class="field-input" id="pTitle" placeholder="e.g. Founder story reel" value="${escapeHtml(p.title)}"/>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="field-label">Date</label>
+              <input type="date" class="field-input" id="pDate" value="${p.date}"/>
+            </div>
+            <div>
+              <label class="field-label">Time</label>
+              <input type="time" class="field-input" id="pTime" value="${p.time}"/>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="field-label">Platform</label>
+              <select class="field-select" id="pPlatform">${PLATFORMS.map(pl=>`<option value="${pl.v}" ${pl.v===p.platform?"selected":""}>${pl.l}</option>`).join("")}</select>
+            </div>
+            <div>
+              <label class="field-label">Status</label>
+              <select class="field-select" id="pStatus">${STATUSES.map(st=>`<option value="${st}" ${st===p.status?"selected":""}>${st}</option>`).join("")}</select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Caption / notes</label>
+            <textarea class="field-textarea" id="pCaption" placeholder="Write the caption, brief, or notes here...">${escapeHtml(p.caption||"")}</textarea>
+          </div>
+          <div>
+            <label class="field-label">Media link (optional)</label>
+            <input class="field-input" id="pLink" placeholder="Paste a Drive / Canva / asset link" value="${escapeHtml(p.link||"")}"/>
+          </div>
+          <div class="modal-actions">
+            ${existing? '<button class="btn btn-ghost" id="mDelete" style="color:var(--danger)">Delete</button>' : '<span></span>'}
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" id="mCancel">Cancel</button>
+              <button class="btn btn-primary" id="mSave">${existing?"Save Changes":"Add to Calendar"}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $("ovl").onclick = (e)=>{ if(e.target.id==="ovl") closeModal(); };
+    $("mCancel").onclick = closeModal;
+    if(existing) $("mDelete").onclick = ()=>{
+      posts[clientId] = posts[clientId].filter(x=>x.id!==existing.id);
+      savePosts(clientId); closeModal(); renderClientPage(); renderClientList();
+      toast("Content deleted");
+    };
+    $("mSave").onclick = async ()=>{
+      const title = $("pTitle").value.trim();
+      if(!title){ toast("Give this post a title"); return; }
+      const updated = {
+        id:p.id, title, date:$("pDate").value, time:$("pTime").value,
+        platform:$("pPlatform").value, status:$("pStatus").value,
+        caption:$("pCaption").value, link:$("pLink").value
+      };
+      const idx = list.findIndex(x=>x.id===updated.id);
+      if(idx>-1) list[idx]=updated; else list.push(updated);
+      posts[clientId]=list;
+      await savePosts(clientId);
+      closeModal();
+      renderClientPage();
+      renderClientList();
+      toast(existing? "Content updated" : "Added to calendar");
+    };
+  }
+
+  // ---------- Tips ----------
+  function renderTip(){
+    const t = TIPS[Math.floor(Math.random()*TIPS.length)];
+    $("tipBox").innerHTML = `<div class="tip-card"><span class="tip-tag">${t.tag}</span><div>${t.text}</div></div>`;
+  }
+
+  // ---------- Clock ----------
+  function tickClock(){
+    $("clockEl").textContent = new Date().toLocaleString(undefined,{weekday:"short", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"});
+  }
+
+  // ---------- Wire up ----------
+  function wire(){
+    $("tabOverview").onclick = ()=> setPage("overview");
+    $("tabClient").onclick = ()=> setPage("client");
+    $("addClientBtn").onclick = openClientModal;
+    $("clientSearch").oninput = renderClientList;
+    $("addPostBtn").onclick = ()=>{ if(!activeClientId){ toast("Add a customer first"); return;} openPostModal(activeClientId, null); };
+    $("viewCalBtn").onclick = ()=>{ calView="cal"; renderClientPage(); };
+    $("viewListBtn").onclick = ()=>{ calView="list"; renderClientPage(); };
+    $("prevMonthBtn").onclick = ()=>{ calMonthOffset--; renderClientPage(); };
+    $("nextMonthBtn").onclick = ()=>{ calMonthOffset++; renderClientPage(); };
+    $("shuffleTipBtn").onclick = renderTip;
+    tickClock();
+    setInterval(tickClock, 30000);
+    renderTip();
+  }
+
+  async function init(){
+    wire();
+    await loadAll();
+    if(!clients.length){
+      // seed a friendly first example so the UI never looks broken/empty
+      renderClientList();
+    } else {
+      renderClientList();
+    }
+    setPage("overview");
+  }
+
+  init();
+})();
+</script>
